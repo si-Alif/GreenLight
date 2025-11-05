@@ -27,9 +27,21 @@ func main(){
 	var cfg config
 
 	flag.IntVar(&cfg.port , "port" , 4000 , "API server port")
+
+	/*
+	  flag parsing stages :
+			1. Declare a flag with name , default values and a message , which initially returns a pointer pointing to the default value
+			2. Now when the code encounters flag.Parse() it will start evaluating and parsing the command line args
+			3. After this step the flag variable will be updated to point towards the value passed in the command line
+	*/
+
 	// cfg.env = *flag.String("env" , "development" , "Environment (development | production | test)")
-	flag.StringVar(&cfg.env , "env" , "development" , "Environment (development | production | test)")
+	// ❌❌❌ This is wrong cause your setting "cfg.env"'s value to the default one as the code hasn't went to flag.Parse() yet
+
+	env := flag.String("env" , "development" , "Environment (development | production | test)")
 	flag.Parse()
+
+	cfg.env = *env // ✅ This is now correct as env flag's now pointing to the passed variable value from the CLI
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout , nil))
 
@@ -43,7 +55,7 @@ func main(){
 	mux.HandleFunc("/v1/healthcheck" , app.healthcheckHandler)
 
 	srv := &http.Server{
-		Addr: fmt.Sprintf(":%d" , cfg.port),
+		Addr: fmt.Sprintf(":%d" , cfg.port), // made a mistake here , remember Addr takes port pattern like :4000 and you forgot the colon
 		Handler: mux,
 		IdleTimeout: time.Minute,
 		ReadTimeout: time.Second * 5,

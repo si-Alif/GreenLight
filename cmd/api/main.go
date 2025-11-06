@@ -50,13 +50,9 @@ func main(){
 		logger : logger,
 	}
 
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/v1/healthcheck" , app.healthcheckHandler)
-
 	srv := &http.Server{
 		Addr: fmt.Sprintf(":%d" , cfg.port), // made a mistake here , remember Addr takes port pattern like :4000 and you forgot the colon
-		Handler: mux,
+		Handler: app.routes(),
 		IdleTimeout: time.Minute,
 		ReadTimeout: time.Second * 5,
 		WriteTimeout: time.Second * 10,

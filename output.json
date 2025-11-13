@@ -1,6 +1,6 @@
 HTTP/1.1 200 OK
 Content-Type: application/json
-Date: Thu, 13 Nov 2025 04:09:24 GMT
-Content-Length: 69
+Date: Thu, 13 Nov 2025 14:55:54 GMT
+Content-Length: 145
 
-{"environment":"development","status":"available","version":"1.0.0"}
+{"ID":67,"CreatedAt":"2025-11-13T20:55:54.223866375+06:00","Title":"Casablanca","Year":0,"Runtime":102,"Genres":["drama","romance"],"Version":1}

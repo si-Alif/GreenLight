@@ -1,6 +1,6 @@
 HTTP/1.1 200 OK
 Content-Type: application/json
-Date: Wed, 12 Nov 2025 17:13:10 GMT
-Content-Length: 79
+Date: Thu, 13 Nov 2025 04:09:24 GMT
+Content-Length: 69
 
-{"status" : "available" , "environment" : "development" , "version" : "1.0.0" }
+{"environment":"development","status":"available","version":"1.0.0"}

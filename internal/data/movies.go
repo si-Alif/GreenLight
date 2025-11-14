@@ -10,7 +10,7 @@ type Movie struct {
 	CreatedAt time.Time `json:"-"` // used - directive so that this field is omitted from the response body
 	Title string `json:"title"`
 	Year int32 `json:"year,omitzero"`
-	Runtime int32  `json:"runtime,omitzero"`      // to store the runtime in minutes
+	Runtime Runtime  `json:"runtime,omitzero"`      // to store the runtime in minutes
 	Genres []string `json:"genres,omitzero"`
 	Version int32  `json:"version"`   //starts with 1 and then gets incremented each time the movie info is updated
 }

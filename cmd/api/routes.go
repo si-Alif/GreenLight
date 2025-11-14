@@ -11,13 +11,13 @@ func (app *application) routes() http.Handler{
 
 	router.NotFound = http.HandlerFunc(app.notFoundResponse)
 	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowed)
-	
+
 
 
 	router.HandlerFunc(http.MethodGet , "/v1/healthcheck" , app.healthcheckHandler)
 	router.HandlerFunc(http.MethodPost , "/v1/movies" , app.createMovieHandler)
 	router.HandlerFunc(http.MethodGet , "/v1/movies/:id" , app.showMovieHandler)
 
-	return router
+	return app.recoverPanic(router) // Wrap the router with the panic recovery middleware
 }
 

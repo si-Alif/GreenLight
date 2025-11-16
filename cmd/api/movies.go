@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"greenlight.si-Alif.net/internal/data"
+	"greenlight.si-Alif.net/internal/validator"
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter , r *http.Request){
@@ -20,6 +21,27 @@ func (app *application) createMovieHandler(w http.ResponseWriter , r *http.Reque
 
 	if err != nil {
 		app.badRequestResponse(w , r , err)
+		return
+	}
+
+	// rather than manipulating or working with the input struct directly we create a new movie struct
+	movie := &data.Movie{
+		Title: input.Title ,
+		Year: input.Year ,
+		Runtime: input.Runtime ,
+		Genres: input.Genres ,
+	}
+
+	v := validator.New()
+
+	if data.ValidateMovie(v , movie) ; !v.Valid() {
+		app.failedValidationResponse(w , r , v.Errors)
+		return
+	}
+
+
+	if !v.Valid() {
+		app.failedValidationResponse(w , r , v.Errors)
 		return
 	}
 

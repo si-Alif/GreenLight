@@ -1,12 +1,16 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"database/sql"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 const version = "1.0.0"
@@ -15,12 +19,17 @@ const version = "1.0.0"
 type config struct {
 	port int // port to listen on
 	env string // development or production or test
+	db struct{
+		dsn string
+	}
+
 }
 
 // this application struct will contain all dependencies / packages used in our application in a central place
 type application struct{
 	config config
 	logger *slog.Logger
+
 }
 
 func main(){
@@ -39,11 +48,26 @@ func main(){
 	// ❌❌❌ This is wrong cause your setting "cfg.env"'s value to the default one as the code hasn't went to flag.Parse() yet
 
 	env := flag.String("env" , "development" , "Environment (development | production | test)")
+
+	flag.StringVar(&cfg.db.dsn , "db-dsn" , "postgres://greenlight:pa55word@localhost/greenlight" , "PostgreSQL DSN")
+
 	flag.Parse()
 
 	cfg.env = *env // ✅ This is now correct as env flag's now pointing to the passed variable value from the CLI
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout , nil))
+
+	// open a connection pool
+	db , err := openDB(cfg)
+
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	defer db.Close()
+
+	logger.Info("database connection pool established")
 
 	app := &application{
 		config: cfg,
@@ -61,8 +85,27 @@ func main(){
 
 	logger.Info("starting server " , "addr" , srv.Addr , "env" , cfg.env)
 
-	err:= srv.ListenAndServe()
+	err= srv.ListenAndServe()
 	logger.Error(err.Error())
 	os.Exit(1)
 
+}
+
+func openDB(cfg config) (*sql.DB , error){
+	db ,err := sql.Open("postgres" , cfg.db.dsn) // opens a connection pool , not the connection itself , cz connection is done lazily(only when a request comes in) . So , we need to make sure all is ok so that we don't fell in some runtime error while connecting to the db which is done by using db.PingContext()
+
+	if err != nil {
+		return nil , err
+	}
+
+	ctx , cancel := context.WithTimeout(context.Background() , 5 * time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		db.Close()
+		return nil , err
+	}
+
+	return  db , nil
 }

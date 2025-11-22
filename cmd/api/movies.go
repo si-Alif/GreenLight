@@ -72,4 +72,3 @@ func (app *application) showMovieHandler(w http.ResponseWriter , r *http.Request
 	}
 
 }
-

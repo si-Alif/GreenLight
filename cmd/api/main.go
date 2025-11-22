@@ -49,7 +49,7 @@ func main(){
 
 	env := flag.String("env" , "development" , "Environment (development | production | test)")
 
-	flag.StringVar(&cfg.db.dsn , "db-dsn" , "postgres://greenlight:pa55word@localhost/greenlight" , "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn , "db-dsn" , os.Getenv("GREENLIGHT_DB_DSN") , "PostgreSQL DSN")
 
 	flag.Parse()
 

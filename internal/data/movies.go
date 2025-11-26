@@ -2,8 +2,10 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
+	"github.com/lib/pq"
 	"greenlight.si-Alif.net/internal/validator"
 )
 
@@ -45,18 +47,51 @@ type MovieModel struct{
 }
 
 
-func (md MovieModel) Insert (movie *Movie) error {
-	return nil
+func (md MovieModel) Insert(movie *Movie) error {
+	query := `INSERT INTO movies (title , year , runtime , genres) VALUES ($1 , $2 , $3 , $4) RETURNING id , created_at , version`
+
+	// create an args array of all the placeholders in serial
+	args := []any{movie.Title , movie.Year , movie.Runtime , pq.Array(movie.Genres)}
+
+	return md.DB.QueryRow(query , args...).Scan(&movie.ID , &movie.CreatedAt , &movie.Version)
 }
 
 func (md MovieModel) Get(id int64) (*Movie , error ){
-	return nil  ,nil
+	if id < 1 {
+		return  nil , ErrRecordNotFound
+	}
+
+	query := `SELECT id , created_at , title , year, runtime , genres, version FROM movies WHERE id = $1`
+
+	var movie Movie
+
+	err := md.DB.QueryRow(query , id).Scan(
+		&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres),
+		&movie.Version,
+	)
+
+	// There might be error for no existence of desired data or something else
+	if err != nil{
+		if errors.Is(err , sql.ErrNoRows){
+			return  nil , ErrRecordNotFound
+		}else{
+			return nil , err
+		}
+	}
+
+	return &movie , nil
+
 }
 
 func (md MovieModel) Update(movie *Movie) error{
 	return  nil
 }
 
-func (md MovieModel) Delete(id int64) error {
+func (md MovieModel) Delete(id int64) error{
 	return nil
 }

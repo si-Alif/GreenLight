@@ -105,5 +105,29 @@ func (md MovieModel) Update(movie *Movie) error{
 }
 
 func (md MovieModel) Delete(id int64) error{
+	// as delete won't perform any kind of retrieval , it's better to use Exec() in this scenario which return sql.Result object
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	stmnt := `DELETE FROM movies WHERE id=$1`
+
+	result , err := md.DB.Exec(stmnt , id)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected , err := result.RowsAffected()
+
+	if err != nil{
+		return err
+	}
+
+	if rowsAffected == 0{
+		return ErrRecordNotFound
+	}
+
 	return nil
+
 }

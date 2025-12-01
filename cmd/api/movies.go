@@ -115,10 +115,10 @@ func (app *application) updateMovieHandler(w http.ResponseWriter , r *http.Reque
 
 	// fields we expect the user to provide when they are going to use our application
 	var userInput struct{
-		Title string `json:"title"`
-		Year int32 `json:"year"`
-		Runtime data.Runtime `json:"runtime"`
-		Genres []string `json:"genres"`
+		Title *string `json:"title"`
+		Year *int32 `json:"year"`
+		Runtime *data.Runtime `json:"runtime"`
+		Genres []string `json:"genres"` // value of a slice is a pointer
 	}
 
 	err = app.readJSON(w , r , &userInput)
@@ -127,12 +127,34 @@ func (app *application) updateMovieHandler(w http.ResponseWriter , r *http.Reque
 		app.badRequestResponse(w , r , err)
 		return
 	}
+	/* Mutate the whole movie info in the DB
 
 	// update the movie fields values retrieved from database
 	movie.Title = userInput.Title
 	movie.Year = userInput.Year
 	movie.Genres = userInput.Genres
 	movie.Runtime = userInput.Runtime
+
+	*/
+
+	// Partial Update
+	if userInput.Title != nil{
+		movie.Title = *userInput.Title
+	}
+
+	if userInput.Runtime != nil{
+		movie.Runtime = *userInput.Runtime
+	}
+
+	if userInput.Year != nil{
+		movie.Year = *userInput.Year
+	}
+
+	if userInput.Genres != nil{
+		movie.Genres = userInput.Genres // no need to dereference a slice cause it's already transported via a pointer and the compiler dereferences it
+	}
+
+	
 
 	v := validator.New()
 

@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflicts = errors.New("edit Conflict")
 )
 
 // wrapper models that wraps around copies of all Models

@@ -89,7 +89,7 @@ func (md MovieModel) Get(id int64) (*Movie , error ){
 }
 
 func (md MovieModel) Update(movie *Movie) error{
-	stmnt := "UPDATE movies SET title = $1 , year = $2 , runtime = $3 , genres = $4 , version = version + 1 WHERE id = $5 RETURNING version"
+	stmnt := "UPDATE movies SET title = $1 , year = $2 , runtime = $3 , genres = $4 , version = version + 1 WHERE id = $5 AND version=$6 RETURNING version"
 
 	// fields to be provided for placeholder parameters as this array gets destructured
 	args := []any{
@@ -98,9 +98,21 @@ func (md MovieModel) Update(movie *Movie) error{
 		movie.Runtime,
 		pq.Array(movie.Genres),
 		movie.ID,
+		movie.Version, // expected movie version
 	}
 
-	return md.DB.QueryRow(stmnt , args...).Scan(&movie.Version)
+	err :=  md.DB.QueryRow(stmnt , args...).Scan(&movie.Version)
+
+	if err != nil {
+		switch {
+			case errors.Is(err , sql.ErrNoRows):
+				return ErrEditConflicts
+			default:
+				return  err
+		}
+	}
+
+	return  nil
 
 }
 

@@ -154,7 +154,7 @@ func (app *application) updateMovieHandler(w http.ResponseWriter , r *http.Reque
 		movie.Genres = userInput.Genres // no need to dereference a slice cause it's already transported via a pointer and the compiler dereferences it
 	}
 
-	
+
 
 	v := validator.New()
 
@@ -166,8 +166,13 @@ func (app *application) updateMovieHandler(w http.ResponseWriter , r *http.Reque
 	err = app.models.Movies.Update(movie)
 
 	if err != nil{
-		app.serverErrorResponse(w , r , err)
-		return
+		switch {
+		case errors.Is(err , data.ErrEditConflicts):
+				app.editConflictResponse(w , r)
+		default:
+			app.serverErrorResponse(w , r , err)
+		}
+		return // whatever the error is return
 	}
 
 	err = app.writeJSON(w , http.StatusOK , envelope{"movie" : movie} , nil)

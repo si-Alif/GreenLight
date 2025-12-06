@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -53,7 +54,11 @@ func (md MovieModel) Insert(movie *Movie) error {
 	// create an args array of all the placeholders in serial
 	args := []any{movie.Title , movie.Year , movie.Runtime , pq.Array(movie.Genres)}
 
-	return md.DB.QueryRow(query , args...).Scan(&movie.ID , &movie.CreatedAt , &movie.Version)
+	ctx , cancel := context.WithTimeout(context.Background() , 3 * time.Second)
+
+	defer cancel()
+
+	return md.DB.QueryRowContext(ctx , query , args...).Scan(&movie.ID , &movie.CreatedAt , &movie.Version)
 }
 
 func (md MovieModel) Get(id int64) (*Movie , error ){
@@ -65,7 +70,12 @@ func (md MovieModel) Get(id int64) (*Movie , error ){
 
 	var movie Movie
 
-	err := md.DB.QueryRow(query , id).Scan(
+	ctx , cancel := context.WithTimeout(context.Background() , 3 * time.Second)
+
+	defer cancel() // cancel the context window before we return from the Get() functions stack to prevent memory leak
+
+	// if the query execution doesn't complete before the given time period in context then sql.DB will terminate that DB call
+	err := md.DB.QueryRowContext(ctx, query , id).Scan(
 		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Title,
@@ -74,6 +84,7 @@ func (md MovieModel) Get(id int64) (*Movie , error ){
 		pq.Array(&movie.Genres),
 		&movie.Version,
 	)
+
 
 	// There might be error for no existence of desired data or something else
 	if err != nil{
@@ -101,7 +112,11 @@ func (md MovieModel) Update(movie *Movie) error{
 		movie.Version, // expected movie version
 	}
 
-	err :=  md.DB.QueryRow(stmnt , args...).Scan(&movie.Version)
+	ctx , cancel := context.WithTimeout(context.Background() , 3 * time.Second)
+
+	defer cancel()
+
+	err :=  md.DB.QueryRowContext(ctx ,stmnt , args...).Scan(&movie.Version)
 
 	if err != nil {
 		switch {
@@ -124,7 +139,11 @@ func (md MovieModel) Delete(id int64) error{
 
 	stmnt := `DELETE FROM movies WHERE id=$1`
 
-	result , err := md.DB.Exec(stmnt , id)
+	ctx , cancel  := context.WithTimeout(context.Background() , 3 *time.Second)
+
+	defer cancel()
+
+	result , err := md.DB.ExecContext( ctx, stmnt , id)
 
 	if err != nil {
 		return err

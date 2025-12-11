@@ -1,4 +1,4 @@
-// copyable 
+// copyable
 
 package main
 
@@ -8,10 +8,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"greenlight.si-Alif.net/internal/validator"
 )
 
 func (app *application) readIDParam(r *http.Request) (int64 , error){
@@ -111,5 +113,70 @@ func (app *application) readJSON(w http.ResponseWriter , r *http.Request  , dst 
 	}
 
 	return nil
+
+}
+
+/*
+Check if a Key exists in the query parameter :
+	- In this case , a required key would be passed with a default value and the url.Values map parsed from the request query string.
+
+If
+	the required key's value exists then it would be returned as a string
+else
+	the default value would be returned
+
+	*/
+
+func (app *application) readString(qrs url.Values , key string , defaultValue string) string {
+	targetVal := qrs.Get(key)
+
+	if targetVal == "" {
+		return  defaultValue
+	}
+
+	return targetVal
+}
+
+/*
+readCSV() : It'll be used to parse the genres string value (in general all the key that might contain multiple values) in query parameter into a valid slice
+
+Suppose the query is like this :  v1/movies?title=godfather&genres=crime,drama
+
+Here the genres will be a string value when parsed via url.Values . We need to translate this into a valid slice as it should be
+
+Parameters for readCSV will be the target key , a default value and the request url.Values map
+
+
+*/
+
+func (app *application) readCSV(qrs url.Values , key string , defaultValue []string) []string {
+	targetCSV := qrs.Get(key)
+
+	if targetCSV == "" {
+		return defaultValue
+	}
+
+	return strings.Split(targetCSV , ",")
+
+}
+
+// found if target integer key-value exists in the query parameter
+// readInt(qrs url.Values , key string , defaultValue int , v *validator.Validator) int{}
+
+func (app *application) returnInt(qrs url.Values , key string , defaultValue int , v *validator.Validator) int {
+	targetIntStr := qrs.Get(key)
+
+	if targetIntStr == "" {
+		return defaultValue
+	}
+
+	i , err := strconv.Atoi(targetIntStr)
+
+	if err != nil {
+		v.AddError(key , "must be a string value")
+		return  defaultValue
+	}
+
+	return  i
 
 }

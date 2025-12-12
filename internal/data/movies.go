@@ -162,3 +162,57 @@ func (md MovieModel) Delete(id int64) error{
 	return nil
 
 }
+
+func (md MovieModel) GetAll(title string , genres []string , filters Filters ) ([]*Movie , error){
+	// construct a query string to retrieve all the movies data for now
+	query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies ORDER BY id`
+
+	ctx , cancel := context.WithTimeout(context.Background() , 3 * time.Second)
+
+	defer cancel()
+
+	// retrieve resultSet of movie from database
+	rows , err := md.DB.QueryContext(ctx , query)
+
+	if err != nil {
+		return  nil , err
+	}
+
+	// close the connection
+	defer rows.Close()
+
+	movies := []*Movie{}
+
+	//Use rows.Next to iterate through the resultSet
+	for rows.Next() {
+
+		// Movie instance to hold data for individual movie
+		var movie Movie
+
+		err := rows.Scan(
+			&movie.ID,
+			&movie.CreatedAt,
+			&movie.Title,
+			&movie.Year,
+			&movie.Runtime,
+			pq.Array(&movie.Genres),
+			&movie.Version,
+		)
+
+		if err != nil {
+			return  nil , err
+		}
+
+		movies = append(movies, &movie)
+
+	}
+
+	// check for rows.Err , does it have any error after iterating over all the resultSet ?
+
+	if err = rows.Err() ; err != nil {
+		return  nil , err
+	}
+
+	return  movies , nil
+
+}

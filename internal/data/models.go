@@ -21,3 +21,4 @@ func NewModels(db *sql.DB) Models{
 		Movies : MovieModel{DB: db},
 	}
 }
+

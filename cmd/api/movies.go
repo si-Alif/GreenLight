@@ -245,6 +245,21 @@ func (app *application) listMoviesHandler(w http.ResponseWriter , r *http.Reques
 		return
 	}
 
-	fmt.Fprintf(w, "%+v\n", possibleQueryParameterStruct)
+	movies , err := app.models.Movies.GetAll(
+		possibleQueryParameterStruct.Title,
+		possibleQueryParameterStruct.Genres,
+		possibleQueryParameterStruct.Filters,
+	)
+
+	if err != nil {
+		app.serverErrorResponse(w , r , err)
+		return
+	}
+
+	err = app.writeJSON(w , http.StatusOK , envelope{"movies" : movies} , nil)
+
+	if err != nil {
+		app.serverErrorResponse(w , r , err)
+	}
 
 }

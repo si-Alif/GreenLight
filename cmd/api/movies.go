@@ -216,9 +216,7 @@ func (app *application) listMoviesHandler(w http.ResponseWriter , r *http.Reques
 	var possibleQueryParameterStruct struct {
 		Title string
 		Genres []string
-		Page int
-		PageSize int
-		Sort string
+		data.Filters
 	}
 
 	v := validator.New()
@@ -231,13 +229,13 @@ func (app *application) listMoviesHandler(w http.ResponseWriter , r *http.Reques
 	possibleQueryParameterStruct.Genres = app.readCSV(qrs , "genres" , []string{})
 
 	// read the required page number , fall back to 1 if nil
-	possibleQueryParameterStruct.Page = app.returnInt(qrs , "page" , 1 , v)
+	possibleQueryParameterStruct.Filters.Page = app.returnInt(qrs , "page" , 1 , v)
 
 	// read pagesize if provided(maybe how many entries would be rendered in a single page) . In this case default is 20
-	possibleQueryParameterStruct.PageSize = app.returnInt(qrs , "page_size" , 20 , v)
+	possibleQueryParameterStruct.Filters.PageSize = app.returnInt(qrs , "page_size" , 20 , v)
 
 	// if the base for sorting isn't provided , it'll fallback to id in ascending order
-	possibleQueryParameterStruct.Sort = app.readString(qrs , "sort" , "id")
+	possibleQueryParameterStruct.Filters.Sort = app.readString(qrs , "sort" , "id")
 
 
 	if !v.Valid() {

@@ -173,7 +173,7 @@ func (app *application) returnInt(qrs url.Values , key string , defaultValue int
 	i , err := strconv.Atoi(targetIntStr)
 
 	if err != nil {
-		v.AddError(key , "must be a string value")
+		v.AddError(key , "must be a integer value")
 		return  defaultValue
 	}
 

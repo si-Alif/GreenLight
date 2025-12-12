@@ -164,15 +164,49 @@ func (md MovieModel) Delete(id int64) error{
 }
 
 func (md MovieModel) GetAll(title string , genres []string , filters Filters ) ([]*Movie , error){
+	// --------------------------------------
 	// construct a query string to retrieve all the movies data for now
-	query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies ORDER BY id`
+	// query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies ORDER BY id`
+	// --------------------------------------
+
+	/*
+		✅ query for filtering parameters
+
+		-- For EACH row in the movies table:
+		-- Step 1: Get the parameter value (it's the SAME for all rows)
+		parameter_title = 'black panther'  -- or '' for no filter
+
+		-- Step 2: For each row, check:
+		-- Condition A: Does this movie's title match the parameter?
+		-- Condition B: Is the parameter empty?
+
+		-- If parameter is 'black panther':
+		-- Row 1 (Black Panther): ('black panther' = 'black panther') OR ('black panther' = '')
+		--                       → true OR false → true ✓
+		-- Row 2 (Moana):        ('moana' = 'black panther') OR ('black panther' = '')
+		--                       → false OR false → false ✗
+
+		-- If parameter is '':
+		-- Row 1 (Black Panther): ('black panther' = '') OR ('' = '')
+		--                       → false OR true → true ✓
+		-- Row 2 (Moana):        ('moana' = '') OR ('' = '')
+		--                       → false OR true → true ✓
+	*/
+
+	query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies
+							WHERE
+								(LOWER(title) = LOWER($1) OR $1 = '') AND
+								(genres @> $2 OR $2 = '{}')
+							ORDER BY id
+						`
+
 
 	ctx , cancel := context.WithTimeout(context.Background() , 3 * time.Second)
 
 	defer cancel()
 
 	// retrieve resultSet of movie from database
-	rows , err := md.DB.QueryContext(ctx , query)
+	rows , err := md.DB.QueryContext(ctx , query , title , pq.Array(genres))
 
 	if err != nil {
 		return  nil , err

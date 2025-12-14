@@ -164,13 +164,13 @@ func (md MovieModel) Delete(id int64) error{
 }
 
 func (md MovieModel) GetAll(title string , genres []string , filters Filters ) ([]*Movie , error){
-	// --------------------------------------
+	//1️⃣ ------------------------------------
 	// construct a query string to retrieve all the movies data for now
 	// query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies ORDER BY id`
 	// --------------------------------------
 
 	/*
-		✅ query for filtering parameters
+		2️⃣ query for filtering parameters
 
 		-- For EACH row in the movies table:
 		-- Step 1: Get the parameter value (it's the SAME for all rows)
@@ -191,14 +191,24 @@ func (md MovieModel) GetAll(title string , genres []string , filters Filters ) (
 		--                       → false OR true → true ✓
 		-- Row 2 (Moana):        ('moana' = '') OR ('' = '')
 		--                       → false OR true → true ✓
+
+
+		query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies
+								WHERE
+									(LOWER(title) = LOWER($1) OR $1 = '') AND
+									(genres @> $2 OR $2 = '{}')
+								ORDER BY id
+							`
+
 	*/
 
+	// Implement full-text search
 	query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies
-							WHERE
-								(LOWER(title) = LOWER($1) OR $1 = '') AND
-								(genres @> $2 OR $2 = '{}')
-							ORDER BY id
-						`
+						WHERE
+							(to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '') AND
+							(genres @> $2 OR $2 = '{}')
+						ORDER BY id`
+
 
 
 	ctx , cancel := context.WithTimeout(context.Background() , 3 * time.Second)

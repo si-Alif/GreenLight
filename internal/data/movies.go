@@ -210,19 +210,31 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 
 	*/
 
-	// Implement sorting and sorting order
+	/*
+	-Implement sorting and sorting order
+
 	query := fmt.Sprintf(
 		`SELECT id , created_at , title , year , runtime , genres , version FROM movies
 			WHERE (to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '')
 			AND (genres @> $2 OR $2 = '{}')
 			ORDER BY %s %s , id ASC`, filters.sortColumn(), filters.sortDirection())
+	*/
+
+	// Implement pagination
+	query := fmt.Sprintf(
+	`SELECT id , created_at , title , year , runtime , genres , version FROM movies
+		WHERE (to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '')
+		AND (genres @> $2 OR $2 = '{}')
+		ORDER BY %s %s , id ASC
+		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	defer cancel()
 
+	args := []any{title, pq.Array(genres) , filters.limit() , filters.offset()}
 	// retrieve resultSet of movie from database
-	rows, err := md.DB.QueryContext(ctx, query, title, pq.Array(genres))
+	rows, err := md.DB.QueryContext(ctx, query, args...)
 
 	if err != nil {
 		return nil, err

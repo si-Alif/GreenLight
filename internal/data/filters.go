@@ -44,3 +44,19 @@ func (f Filters) sortDirection() string {
 	}
 	return "ASC"
 }
+
+
+// Pagination related :
+
+// how many entries to return
+func (f Filters) limit() int {
+	return  f.PageSize
+}
+
+// how many entries to skip
+func (f Filters) offset() int {
+	// even though there's a risk of int overflow but we've already put validation check of entry <= 10_000_000
+	return (f.Page - 1) * f.PageSize
+}
+
+

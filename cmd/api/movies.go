@@ -237,6 +237,7 @@ func (app *application) listMoviesHandler(w http.ResponseWriter , r *http.Reques
 	// if the base for sorting isn't provided , it'll fallback to id in ascending order
 	possibleQueryParameterStruct.Filters.Sort = app.readString(qrs , "sort" , "id")
 
+	// define all the sort safeValue list , it'll be compared with the sort query parameter provided by the user
 	possibleQueryParameterStruct.Filters.SortSafeList = []string{"id" , "title" , "year" , "runtime" , "-id" , "-title" , "-year" , "-runtime"}
 
 	// for all the query parameters of listMoviesHandler , a centralized validator instance is used all over

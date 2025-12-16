@@ -1,6 +1,10 @@
 package data
 
-import "greenlight.si-Alif.net/internal/validator"
+import (
+	"strings"
+
+	"greenlight.si-Alif.net/internal/validator"
+)
 
 type Filters struct {
 	Page int
@@ -21,4 +25,22 @@ func ValidateFilters (v *validator.Validator , f Filters){
 	// check for sort parameter's value is in permitted range
 	v.Check(validator.PermittedValue(f.Sort , f.SortSafeList...) , "sort" , "invalid sort value")
 
+}
+
+// check if the sort query parameter value exists in our defined safe list , if it does and needs separation do it
+func (f Filters) sortColumn() string {
+	for _ , safeValue := range f.SortSafeList{
+		if f.Sort == safeValue{
+			return  strings.TrimPrefix(f.Sort , "-")
+		}
+	}
+	panic("unsafe sort parameter" + f.Sort) // for safety purpose to prevent SQL-injection attacks
+}
+
+// figure out the orer direction based on the provided prefix in sort query parameter (eg. "-title" , "id" , "-year")
+func (f Filters) sortDirection() string {
+	if strings.HasPrefix(f.Sort , "-") {
+		return "DESC"
+	}
+	return "ASC"
 }

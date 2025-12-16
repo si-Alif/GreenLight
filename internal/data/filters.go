@@ -13,6 +13,39 @@ type Filters struct {
 	SortSafeList []string
 }
 
+
+// define a metadata struct around pagination
+type Metadata struct {
+	CurrentPage int `json:"current_page",omitzero`
+	PageSize int `json:"page_size",omitzero`
+	FirstPage int `json:"first_page",omitzero`
+	LastPage int `json:"last_page".omitzero`
+	TotalRecords int `json:"total_records",omitzero`
+}
+
+func calculateMetadata(totalRecords , page , page_size int) Metadata{
+	if totalRecords == 0 {
+		return  Metadata{}
+	}
+
+	return  Metadata{
+		CurrentPage: page,
+		PageSize: page_size,
+		FirstPage: 1,
+		LastPage: (totalRecords + page_size - 1) / page_size,
+		TotalRecords: totalRecords,
+	}
+
+}
+
+
+
+
+
+
+
+
+
 // add validation checks for filtering related data fields
 
 func ValidateFilters (v *validator.Validator , f Filters){

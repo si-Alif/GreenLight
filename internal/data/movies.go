@@ -160,7 +160,7 @@ func (md MovieModel) Delete(id int64) error {
 
 }
 
-func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
+func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata,error) {
 	//1️⃣ ------------------------------------
 	// construct a query string to retrieve all the movies data for now
 	// query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies ORDER BY id`
@@ -220,13 +220,25 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 			ORDER BY %s %s , id ASC`, filters.sortColumn(), filters.sortDirection())
 	*/
 
-	// Implement pagination
+	/*
+	Implement pagination
 	query := fmt.Sprintf(
-	`SELECT id , created_at , title , year , runtime , genres , version FROM movies
+		`SELECT id , created_at , title , year , runtime , genres , version FROM movies
 		WHERE (to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '')
 		AND (genres @> $2 OR $2 = '{}')
 		ORDER BY %s %s , id ASC
 		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+
+	*/
+
+	// Implement pagination and generate metadata for it via window functions
+	query := fmt.Sprintf(
+		`SELECT count(*) OVER(), id , created_at , title , year , runtime , genres , version FROM movies
+		WHERE (to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '')
+		AND (genres @> $2 OR $2 = '{}')
+		ORDER BY %s %s , id ASC
+		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
@@ -237,13 +249,14 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 	rows, err := md.DB.QueryContext(ctx, query, args...)
 
 	if err != nil {
-		return nil, err
+		return nil,Metadata{},err
 	}
 
 	// close the connection
 	defer rows.Close()
 
 	movies := []*Movie{}
+	totalRecords := 0
 
 	//Use rows.Next to iterate through the resultSet
 	for rows.Next() {
@@ -252,6 +265,7 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 		var movie Movie
 
 		err := rows.Scan(
+			&totalRecords,
 			&movie.ID,
 			&movie.CreatedAt,
 			&movie.Title,
@@ -262,7 +276,7 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 		)
 
 		if err != nil {
-			return nil, err
+			return nil,Metadata{} , err
 		}
 
 		movies = append(movies, &movie)
@@ -272,9 +286,11 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 	// check for rows.Err , does it have any error after iterating over all the resultSet ?
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, Metadata{} ,  err
 	}
 
-	return movies, nil
+	metadata := calculateMetadata(totalRecords , filters.Page , filters.PageSize)
+
+	return movies, metadata,  nil
 
 }

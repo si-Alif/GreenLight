@@ -41,11 +41,6 @@ func calculateMetadata(totalRecords , page , page_size int) Metadata{
 
 
 
-
-
-
-
-
 // add validation checks for filtering related data fields
 
 func ValidateFilters (v *validator.Validator , f Filters){

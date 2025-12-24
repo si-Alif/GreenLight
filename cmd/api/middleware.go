@@ -49,6 +49,12 @@ return http.HandlerFunc(func(w http.ResponseWriter , r *http.Request){
 // IP-based rate-limiting
 func (app *application) rateLimit(next http.Handler) http.Handler{
 
+	if !app.config.limiter.enabled {
+		return next // return if no limiter is needed
+	}
+
+
+
 	// define a client struct to hold the rate limiter and last seen time
 	type client struct {
 		limiter rate.Limiter
@@ -88,7 +94,8 @@ func (app *application) rateLimit(next http.Handler) http.Handler{
 
 		// check if the client exists in the map and if not add their IP with a rate limiter instance
 		if _ , found := clients[ip]; !found {
-			clients[ip] = &client{limiter: *rate.NewLimiter(2, 4)}
+			clients[ip] = &client{
+				limiter:*rate.NewLimiter(rate.Limit(app.config.limiter.rps) , app.config.limiter.burst)}
 		}
 
 		// once the limiter been assigned , attach current time

@@ -10,15 +10,17 @@ var (
 	ErrEditConflicts = errors.New("edit Conflict")
 )
 
-// wrapper models that wraps around copies of all Models
+// wrapper models that wraps around copies of all defined Models
 type Models struct{
 	Movies MovieModel
+	Users UserModel
 }
 
-// NewModels takes the DB connections pool's access though the parameter and then returns a Models structs instance(not address) to work with
+// NewModels takes the DB connection pool's access though the parameter and then returns a Models structs instance(not address) to work with
 func NewModels(db *sql.DB) Models{
 	return Models{
 		Movies : MovieModel{DB: db},
+		Users: UserModel{DB: db},
 	}
 }
 

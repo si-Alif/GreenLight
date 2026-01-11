@@ -1,0 +1,224 @@
+{{define "subject"}} Welcome to GreenLight, {{.User.Name}}! Your Account is Ready {{end}}
+
+{{define "plainBody"}}
+Hi {{.User.Name}},
+
+Welcome to GreenLight! 🎉
+
+Your account has been successfully created and you're now part of our community. We're excited to have you on board!
+
+Your Account Details:
+- Username: {{.User.Name}}
+- Email: {{.User.Email}}
+- Registration Date: {{.RegistrationDate}}
+
+What's Next?
+You can now start exploring GreenLight and discover all the features we have to offer. You'll receive a separate email
+shortly with instructions to verify your email address for full account access.
+
+Getting Started:
+- Browse our collection of movies and content
+- Customize your profile settings
+- Explore personalized recommendations
+- Connect with our community
+
+If you didn't create this account, please contact our support team immediately at support@greenlight.com
+
+Need help getting started? Our support team is always here to assist you!
+
+Best regards,
+The GreenLight Team
+
+---
+This is an automated message, please do not reply directly to this email.
+{{end}}
+
+{{define "htmlBody"}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to GreenLight</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333333;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .content {
+      padding: 40px 30px;
+    }
+
+    h1 {
+      color: #333333;
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+
+    p {
+      color: #666666;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
+      text-align: center;
+      margin: 35px 0;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 16px 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+    }
+
+    .info-box {
+      background-color: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 15px 20px;
+      margin: 25px 0;
+      border-radius: 4px;
+    }
+
+    .info-box p {
+      margin: 0;
+      font-size: 14px;
+      color: #555555;
+    }
+
+    .footer {
+      background-color: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .footer p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #999999;
+    }
+
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .security-note {
+      font-size: 13px;
+      color: #888888;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🎬 GreenLight</div>
+    </div>
+
+    <div class="content">
+      <h1>Welcome to GreenLight, {{.User.Name}}! 🎉</h1>
+
+      <p><strong>Congratulations!</strong> Your account has been successfully created and you're now part of the
+        GreenLight community. We're excited to have you on board!</p>
+
+      <div class="info-box" style="background-color: #e8f5e9; border-left-color: #4caf50;">
+        <p><strong>✅ Account Created Successfully</strong></p>
+      </div>
+
+      <h2 style="color: #333333; font-size: 20px; margin-top: 30px; margin-bottom: 15px;">Your Account Details</h2>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+        <tr>
+          <td style="padding: 10px 0; color: #666666; font-size: 15px;"><strong>Username:</strong></td>
+          <td style="padding: 10px 0; color: #333333; font-size: 15px;">{{.User.Name}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #666666; font-size: 15px;"><strong>Email:</strong></td>
+          <td style="padding: 10px 0; color: #333333; font-size: 15px;">{{.User.Email}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #666666; font-size: 15px;"><strong>Registration Date:</strong></td>
+          <td style="padding: 10px 0; color: #333333; font-size: 15px;">{{.RegistrationDate}}</td>
+        </tr>
+      </table>
+
+      <h2 style="color: #333333; font-size: 20px; margin-top: 30px; margin-bottom: 15px;">What's Next? 🚀</h2>
+      <p>You'll receive a separate email shortly with instructions to <strong>verify your email address</strong> for
+        full account access and enhanced features.</p>
+
+      <p style="margin-top: 25px;">In the meantime, you can start exploring:</p>
+      <ul style="color: #666666; font-size: 16px; margin-bottom: 30px;">
+        <li>Browse our extensive collection of movies and content</li>
+        <li>Customize your profile and preferences</li>
+        <li>Discover personalized recommendations</li>
+        <li>Connect with our vibrant community</li>
+        <li>Set up your watchlist and favorites</li>
+      </ul>
+
+      <div class="info-box">
+        <p><strong>💡 Pro Tip:</strong> Complete your profile to get better personalized recommendations and enhance
+          your GreenLight experience!</p>
+      </div>
+
+      <div class="security-note">
+        <p><strong>🔒 Security Notice:</strong> If you didn't create this account, please contact our support team
+          immediately at <a href="mailto:support@greenlight.com" style="color: #667eea;">support@greenlight.com</a></p>
+      </div>
+
+      <p style="margin-top: 30px;">Need help getting started? Our support team is always here to assist you!</p>
+
+      <p style="margin-top: 30px;">
+        Best regards,<br />
+        <strong>The GreenLight Team</strong>
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>&copy; {{.CurrentYear}} GreenLight. All rights reserved.</p>
+      <p>This is an automated message. Please do not reply directly to this email.</p>
+    </div>
+  </div>
+</body>
+
+</html>
+{{end}}

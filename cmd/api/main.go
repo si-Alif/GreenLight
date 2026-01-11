@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"greenlight.si-Alif.net/internal/data"
+	"greenlight.si-Alif.net/internal/mailer"
 )
 
 const version = "1.0.0"
@@ -31,6 +32,16 @@ type config struct {
 		burst   int
 		enabled bool // if rate-limiting should exist in the first place
 	}
+
+	// SMTP configs
+	smtp struct{
+		host string
+		port int
+		username string
+		password string
+		sender string
+	}
+
 }
 
 // this application struct will contain all dependencies / packages used in our application in a central place
@@ -38,23 +49,25 @@ type application struct {
 	config config
 	logger *slog.Logger
 	models data.Models // copy of different models in a single instance
+	mailer *mailer.Mailer // instance of mailer
 }
 
 func main() {
 	var cfg config
 
-	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 
 	/*
-		  flag parsing stages :
-				1. Declare a flag with name , default values and a message , which initially returns a pointer pointing to the default value
-				2. Now when the code encounters flag.Parse() it will start evaluating and parsing the command line args
-				3. After this step the flag variable will be updated to point towards the value passed in the command line
+	flag parsing stages :
+	1. Declare a flag with name , default values and a message , which initially returns a pointer pointing to the default value
+	2. Now when the code encounters flag.Parse() it will start evaluating and parsing the command line args
+	3. After this step the flag variable will be updated to point towards the value passed in the command line
 	*/
 
 	// cfg.env = *flag.String("env" , "development" , "Environment (development | production | test)")
 	// ❌❌❌ This is wrong cause your setting "cfg.env"'s value to the default one as the code hasn't went to flag.Parse() yet
 
+	// flags for application in general
+	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	env := flag.String("env", "development", "Environment (development | production | test)")
 
 	// flags for db configuration (postgrSQL specific)
@@ -64,9 +77,17 @@ func main() {
 	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max idle time for a connection")
 
 	// flags for rate-limiting configuration
+	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter(true/false)")
 	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per sec(refilling rate)")
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate-limiter maximum burst")
-	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter(true/false)")
+
+	// flags for SMTP configs
+	flag.StringVar(&cfg.smtp.host , "smtp-host" , "sandbox.smtp.mailtrap.io" , "SMTP host")
+	flag.IntVar(&cfg.smtp.port , "smtp-port" , 2525 , "SMTP port")
+	flag.StringVar(&cfg.smtp.username , "smtp-username" , "174e3c217f3901" , "SMTP username")
+	flag.StringVar(&cfg.smtp.password , "smtp-password" , "7c72dadc7e8c16" , "SMTP password")
+	flag.StringVar(&cfg.smtp.sender , "smtp-sender" , "adolfeggler67@gmail.com" , "SMTP sender")
+
 
 	flag.Parse()
 
@@ -76,20 +97,25 @@ func main() {
 
 	// open a connection pool
 	db, err := openDB(cfg)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer db.Close()
 
+	logger.Info("database connection pool established")
+
+	mailer , err := mailer.New(cfg.smtp.host , cfg.smtp.port , cfg.smtp.username , cfg.smtp.password , cfg.smtp.sender)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	defer db.Close()
-
-	logger.Info("database connection pool established")
-
 	app := &application{
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer,
 	}
 
 	err = app.serve() // start the server

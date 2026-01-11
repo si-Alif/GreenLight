@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"greenlight.si-Alif.net/internal/data"
 	"greenlight.si-Alif.net/internal/validator"
@@ -49,6 +50,23 @@ func (app *application) registerUserHandler(w http.ResponseWriter , r *http.Requ
 			default :
 				app.serverErrorResponse(w , r , err)
 		}
+		return
+	}
+
+	// send email using the mailer.Send() method before returning http response
+	templateData := struct {
+		User             *data.User
+		RegistrationDate string
+		CurrentYear      int
+	}{
+		User:             user,
+		RegistrationDate: user.CreatedAt.Format("January 2, 2006"),
+		CurrentYear:      time.Now().Year(),
+	}
+
+	err = app.mailer.Send(user.Email , "user_welcome.tmpl.html" , templateData)
+	if err != nil{
+		app.serverErrorResponse(w , r , err)
 		return
 	}
 

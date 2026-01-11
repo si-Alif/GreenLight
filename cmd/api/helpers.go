@@ -184,13 +184,20 @@ func (app *application) returnInt(qrs url.Values , key string , defaultValue int
 
 // helper function to execute a function passed as an argument in a background goroutine
 func (app *application) background(fn func()){
+	// increment waitGroup counter before defining goroutine , not inside it
+	app.wg.Add(1)
+
 	go func(){
+
+		// defer the done function which decrements by 1 once the goroutine is returned
+		defer app.wg.Done()
 
 		defer func(){
 			if err := recover();err != nil{
 				app.logger.Error(fmt.Sprintf("%v" , err))
 			}
 		}()
+
 
 		fn()
 

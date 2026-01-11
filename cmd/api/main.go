@@ -6,6 +6,7 @@ import (
 	"flag"
 	"log/slog"
 	"os"
+	"sync"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -50,6 +51,7 @@ type application struct {
 	logger *slog.Logger
 	models data.Models // copy of different models in a single instance
 	mailer *mailer.Mailer // instance of mailer
+	wg sync.WaitGroup // no need to initialize it as it's zeroth value is set to 0 even if it's not initialized explicitly
 }
 
 func main() {

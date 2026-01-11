@@ -42,10 +42,23 @@ func (app *application) serve() error {
 
 		defer cancel()
 
+		//----- before considering about background routines-----------
 		// shut down the server with the context window of 30s we just created
 		// if shutdown is successful , then Shutdown() returns nil
 		// or in case any error occurs or shutdown wasn't complete in the 30s time frame then it will return error which will be relayed to shutdownErr channel
-		shutdownErr <- srv.Shutdown(ctx)
+		//shutdownErr <- srv.ShutDown(ctx)
+		//-------------------------------------------------------------
+
+		err := srv.Shutdown(ctx)
+		if err != nil{
+			shutdownErr <- err
+		}
+
+		app.logger.Info("completing background tasks" , "addr" , srv.Addr)
+
+		app.wg.Wait() // wait/block till all tasks are complete
+
+		shutdownErr <- nil // inform shutdownErr channel that shutdown was done successfully via nil response
 
 	}()
 

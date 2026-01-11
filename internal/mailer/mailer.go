@@ -3,7 +3,6 @@ package mailer
 import (
 	"bytes"
 	"embed"
-	"fmt"
 	"time"
 
 	"github.com/wneessen/go-mail"
@@ -99,6 +98,21 @@ func (ml *Mailer) Send(recipient string, templateFile string, data any) error {
 	msg.AddAlternativeString(mail.TypeTextHTML, htmlBody.String())
 
 	//DialAndSend() takes the message to send , opens activated connection with SMTP server , sends the message and closes the connection
-	return ml.client.DialAndSend(msg)
+	// return ml.client.DialAndSend(msg)
+
+	// try for 3s
+	for i := 1 ; i<= 3 ; i++{
+		err = ml.client.DialAndSend(msg)
+		if err == nil {
+			return nil
+		}
+
+		if i !=3 {
+			time.Sleep(800 * time. Millisecond)
+		}
+
+	}
+
+  return err
 
 }

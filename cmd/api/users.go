@@ -64,13 +64,16 @@ func (app *application) registerUserHandler(w http.ResponseWriter , r *http.Requ
 		CurrentYear:      time.Now().Year(),
 	}
 
-	err = app.mailer.Send(user.Email , "user_welcome.tmpl.html" , templateData)
-	if err != nil{
-		app.serverErrorResponse(w , r , err)
-		return
-	}
+	// place the email sending functionality in a background goroutine
+	app.background(func(){
+		err := app.mailer.Send(user.Email , "user_welcome.tmpl.html" , templateData)
+		if err != nil{
+			app.logger.Error(err.Error()) // not sending app.serverErrorResponse() cz by the time we encounter any error from this , the client would've already sent the http response and even if we use it , it would send another http response resulting in a error
+		}
+	})
 
-	err = app.writeJSON(w , http.StatusCreated , envelope{"user":user} , nil)
+	// err = app.writeJSON(w , http.StatusCreated , envelope{"user":user} , nil) --> rather than this we'll use http.StatusAccepted code to make the user realize that their has been accepted for processing
+	err = app.writeJSON(w , http.StatusAccepted , envelope{"user":user} , nil)
 
 	if err != nil{
 		app.serverErrorResponse(w , r , err)

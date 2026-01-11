@@ -181,3 +181,19 @@ func (app *application) returnInt(qrs url.Values , key string , defaultValue int
 
 }
 
+
+// helper function to execute a function passed as an argument in a background goroutine
+func (app *application) background(fn func()){
+	go func(){
+
+		defer func(){
+			if err := recover();err != nil{
+				app.logger.Error(fmt.Sprintf("%v" , err))
+			}
+		}()
+
+		fn()
+
+	}()
+
+}

@@ -1,221 +1,234 @@
-{{define "subject"}} Welcome to GreenLight, {{.User.Name}}! Your Account is Ready {{end}}
+{{define "subject"}}Welcome to Greenlight!{{end}}
 
 {{define "plainBody"}}
-Hi {{.User.Name}},
+Hi there,
 
-Welcome to GreenLight! 🎉
+Thanks for signing up for a Greenlight account. We're excited to have you on board!
 
-Your account has been successfully created and you're now part of our community. We're excited to have you on board!
+ACCOUNT DETAILS
+===============
+Your user ID: {{.UserID}}
 
-Your Account Details:
-- Username: {{.User.Name}}
-- Email: {{.User.Email}}
-- Registration Date: {{.RegistrationDate}}
+ACTIVATE YOUR ACCOUNT
+=====================
+To activate your account, please send a PUT request to the following endpoint:
 
-What's Next?
-You can now start exploring GreenLight and discover all the features we have to offer. You'll receive a separate email
-shortly with instructions to verify your email address for full account access.
+Endpoint: PUT /v1/users/activated
 
-Getting Started:
-- Browse our collection of movies and content
-- Customize your profile settings
-- Explore personalized recommendations
-- Connect with our community
+Request Body (JSON):
+{
+"token": "{{.ActivationToken}}"
+}
 
-If you didn't create this account, please contact our support team immediately at support@greenlight.com
+IMPORTANT: This activation token will expire in a day and can only be used once.
 
-Need help getting started? Our support team is always here to assist you!
+If you didn't create this account, please ignore this email or contact our support team.
 
-Best regards,
-The GreenLight Team
+Thanks,
+The Greenlight Team
 
 ---
-This is an automated message, please do not reply directly to this email.
+Need help? Contact us at support@greenlight.example.com
 {{end}}
 
 {{define "htmlBody"}}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to GreenLight</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Welcome to Greenlight</title>
   <style>
     body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333333;
+      background-color: #f4f4f4;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background-color: #f4f4f4;
-      color: #333333;
-      line-height: 1.6;
     }
 
-    .container {
+    .email-container {
       max-width: 600px;
-      margin: 0 auto;
+      margin: 20px auto;
       background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .header {
+    .email-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 40px 20px;
-      text-align: center;
-    }
-
-    .logo {
-      font-size: 32px;
-      font-weight: bold;
       color: #ffffff;
-      margin: 0;
-    }
-
-    .content {
-      padding: 40px 30px;
-    }
-
-    h1 {
-      color: #333333;
-      font-size: 24px;
-      margin-top: 0;
-      margin-bottom: 20px;
-    }
-
-    p {
-      color: #666666;
-      font-size: 16px;
-      margin-bottom: 20px;
-    }
-
-    .button-container {
+      padding: 30px 20px;
       text-align: center;
-      margin: 35px 0;
     }
 
-    .button {
-      display: inline-block;
-      padding: 16px 40px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #ffffff !important;
-      text-decoration: none;
-      border-radius: 6px;
+    .email-header h1 {
+      margin: 0;
+      font-size: 28px;
       font-weight: 600;
-      font-size: 16px;
-      transition: transform 0.2s;
     }
 
-    .button:hover {
-      transform: translateY(-2px);
+    .email-body {
+      padding: 30px 30px 20px;
+    }
+
+    .email-body p {
+      margin: 0 0 15px;
+      color: #555555;
     }
 
     .info-box {
       background-color: #f8f9fa;
       border-left: 4px solid #667eea;
-      padding: 15px 20px;
-      margin: 25px 0;
+      padding: 15px;
+      margin: 20px 0;
       border-radius: 4px;
     }
 
-    .info-box p {
-      margin: 0;
-      font-size: 14px;
-      color: #555555;
+    .info-box strong {
+      color: #333333;
+      display: block;
+      margin-bottom: 5px;
     }
 
-    .footer {
+    .activation-section {
+      background-color: #f0f4ff;
+      border-radius: 6px;
+      padding: 20px;
+      margin: 25px 0;
+    }
+
+    .activation-section h2 {
+      margin: 0 0 15px;
+      color: #667eea;
+      font-size: 18px;
+    }
+
+    .code-block {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      margin: 10px 0;
+    }
+
+    .endpoint {
+      color: #ce9178;
+      font-weight: 600;
+    }
+
+    .warning {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 12px 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .warning strong {
+      color: #856404;
+    }
+
+    .email-footer {
       background-color: #f8f9fa;
-      padding: 30px;
+      padding: 20px 30px;
       text-align: center;
-      border-top: 1px solid #e0e0e0;
+      border-top: 1px solid #e9ecef;
     }
 
-    .footer p {
+    .email-footer p {
       margin: 5px 0;
-      font-size: 14px;
-      color: #999999;
+      font-size: 13px;
+      color: #6c757d;
     }
 
-    .footer a {
+    .email-footer a {
       color: #667eea;
       text-decoration: none;
     }
 
-    .security-note {
-      font-size: 13px;
-      color: #888888;
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #e0e0e0;
+    .email-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media only screen and (max-width: 600px) {
+      .email-container {
+        margin: 0;
+        border-radius: 0;
+      }
+
+      .email-body {
+        padding: 20px 15px;
+      }
+
+      .email-header {
+        padding: 20px 15px;
+      }
+
+      .email-header h1 {
+        font-size: 24px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">🎬 GreenLight</div>
+  <div class="email-container">
+    <div class="email-header">
+      <h1>Welcome to Greenlight! 🎉</h1>
     </div>
 
-    <div class="content">
-      <h1>Welcome to GreenLight, {{.User.Name}}! 🎉</h1>
-
-      <p><strong>Congratulations!</strong> Your account has been successfully created and you're now part of the
-        GreenLight community. We're excited to have you on board!</p>
-
-      <div class="info-box" style="background-color: #e8f5e9; border-left-color: #4caf50;">
-        <p><strong>✅ Account Created Successfully</strong></p>
-      </div>
-
-      <h2 style="color: #333333; font-size: 20px; margin-top: 30px; margin-bottom: 15px;">Your Account Details</h2>
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
-        <tr>
-          <td style="padding: 10px 0; color: #666666; font-size: 15px;"><strong>Username:</strong></td>
-          <td style="padding: 10px 0; color: #333333; font-size: 15px;">{{.User.Name}}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #666666; font-size: 15px;"><strong>Email:</strong></td>
-          <td style="padding: 10px 0; color: #333333; font-size: 15px;">{{.User.Email}}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #666666; font-size: 15px;"><strong>Registration Date:</strong></td>
-          <td style="padding: 10px 0; color: #333333; font-size: 15px;">{{.RegistrationDate}}</td>
-        </tr>
-      </table>
-
-      <h2 style="color: #333333; font-size: 20px; margin-top: 30px; margin-bottom: 15px;">What's Next? 🚀</h2>
-      <p>You'll receive a separate email shortly with instructions to <strong>verify your email address</strong> for
-        full account access and enhanced features.</p>
-
-      <p style="margin-top: 25px;">In the meantime, you can start exploring:</p>
-      <ul style="color: #666666; font-size: 16px; margin-bottom: 30px;">
-        <li>Browse our extensive collection of movies and content</li>
-        <li>Customize your profile and preferences</li>
-        <li>Discover personalized recommendations</li>
-        <li>Connect with our vibrant community</li>
-        <li>Set up your watchlist and favorites</li>
-      </ul>
+    <div class="email-body">
+      <p>Hi there,</p>
+      <p>Thanks for signing up for a Greenlight account. We're excited to have you on board!</p>
 
       <div class="info-box">
-        <p><strong>💡 Pro Tip:</strong> Complete your profile to get better personalized recommendations and enhance
-          your GreenLight experience!</p>
+        <strong>Your Account Details</strong>
+        User ID: <strong>{{.UserID}}</strong>
       </div>
 
-      <div class="security-note">
-        <p><strong>🔒 Security Notice:</strong> If you didn't create this account, please contact our support team
-          immediately at <a href="mailto:support@greenlight.com" style="color: #667eea;">support@greenlight.com</a></p>
+      <div class="activation-section">
+        <h2>🔐 Activate Your Account</h2>
+        <p>To complete your registration, please send a PUT request to the following endpoint:</p>
+
+        <div class="code-block">
+          <span class="endpoint">PUT /v1/users/activated</span>
+        </div>
+
+        <p><strong>Request Body (JSON):</strong></p>
+        <div class="code-block">
+          {
+          "token": "{{.ActivationToken}}"
+          }
+        </div>
       </div>
 
-      <p style="margin-top: 30px;">Need help getting started? Our support team is always here to assist you!</p>
+      <div class="warning">
+        <strong>⚠️ Important:</strong> This is a one-time use token that will expire in a day. Please activate your
+        account as soon as possible.
+      </div>
 
-      <p style="margin-top: 30px;">
-        Best regards,<br />
-        <strong>The GreenLight Team</strong>
-      </p>
+      <p style="margin-top: 25px;">If you didn't create this account, please ignore this email or contact our support
+        team immediately.</p>
+
+      <p style="margin-top: 25px;">Thanks,<br><strong>The Greenlight Team</strong></p>
     </div>
 
-    <div class="footer">
-      <p>&copy; {{.CurrentYear}} GreenLight. All rights reserved.</p>
-      <p>This is an automated message. Please do not reply directly to this email.</p>
+    <div class="email-footer">
+      <p>Need help? <a href="mailto:support@greenlight.example.com">Contact Support</a></p>
+      <p style="margin-top: 15px;">
+        <a href="https://greenlight.example.com/privacy">Privacy Policy</a> |
+        <a href="https://greenlight.example.com/terms">Terms of Service</a>
+      </p>
+      <p style="margin-top: 10px; color: #999;">© 2026 Greenlight. All rights reserved.</p>
     </div>
   </div>
 </body>

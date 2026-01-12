@@ -53,15 +53,26 @@ func (app *application) registerUserHandler(w http.ResponseWriter , r *http.Requ
 		return
 	}
 
+	// generate a activation token from the user
+	token , err := app.models.Tokens.New(user.ID , 24*time.Hour , data.ScopeActivation)
+	if err != nil{
+		app.serverErrorResponse(w , r , err)
+		return
+	}
+
 	// send email using the mailer.Send() method before returning http response
 	templateData := struct {
 		User             *data.User
 		RegistrationDate string
 		CurrentYear      int
+		ActivationToken  string
+		UserID           int64
 	}{
 		User:             user,
 		RegistrationDate: user.CreatedAt.Format("January 2, 2006"),
 		CurrentYear:      time.Now().Year(),
+		ActivationToken:  token.PlainText,
+		UserID:           user.ID,
 	}
 
 	// place the email sending functionality in a background goroutine

@@ -13,6 +13,9 @@ type Validator struct {
 	Errors map[string]string
 }
 
+
+// validator instance would be limited to a function only a functions stack frames lifetime , Not scoped globally . Once that stack frame pops out of the stack , all the validations for that function is vanished . 
+
 // New() returns a Empty Validator hashmap
 func New() *Validator {
 	return &Validator{

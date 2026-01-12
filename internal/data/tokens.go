@@ -85,7 +85,7 @@ func (tm *TokenModel) Insert(token *Token) error{
 }
 
 // delete all the tokens for a specific user of a specific scope
-func (tm *TokenModel) DeleteAllForUser(scope string , userID int64) error{
+func (tm *TokenModel) DeleteAllTokensForASpecificScopeOfUser(scope string , userID int64) error{
 	query := `DELETE FROM tokens WHERE scope=$1 AND user_id=$2`
 
 	ctx , cancel := context.WithTimeout(context.Background() , time.Second * 3)
@@ -94,3 +94,5 @@ func (tm *TokenModel) DeleteAllForUser(scope string , userID int64) error{
 	_ , err := tm.DB.ExecContext(ctx , query , scope , userID)
 	return  err
 }
+
+

@@ -1,13 +1,17 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
+	"greenlight.si-Alif.net/internal/data"
+	"greenlight.si-Alif.net/internal/validator"
 )
 
 func (app *application) recoverPanic(next http.Handler) http.Handler{
@@ -113,4 +117,55 @@ func (app *application) rateLimit(next http.Handler) http.Handler{
 
 	})
 
+}
+
+
+// authentication middleware
+func (app *application) authenticate(next http.Handler) http.Handler{
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Add "Vary: Authorization" to indicate caches that based on this value response might vary
+		w.Header().Add("Vary" , "Authorization")
+
+		authorizationHeader := r.Header.Get("Authorization")
+
+		if authorizationHeader == ""{
+			r = app.SetUserInRequestContext(r , data.AnonymousUser)
+			next.ServeHTTP(w , r) // call the next handler in the chain
+			return
+		}
+
+		headerParts := strings.Split(authorizationHeader, " ")
+		if len(headerParts) != 2 || headerParts[0] != "Bearer"{
+			app.invalidAuthenticationTokenResponse(w , r )
+			return
+		}
+
+		token := headerParts[1]
+
+		v := validator.New()
+
+		if data.ValidPlainTextToken(v , token); !v.Valid(){
+			app.invalidAuthenticationTokenResponse(w , r)
+			return
+		}
+
+		user , err := app.models.Users.GetUserViaToken(data.ScopeAuthentication , token)
+		if err != nil {
+			switch {
+				case errors.Is(err , data.ErrRecordNotFound):
+					app.invalidAuthenticationTokenResponse(w , r)
+				default :
+					app.serverErrorResponse(w , r , err)
+
+			}
+			return
+		}
+
+
+		r = app.SetUserInRequestContext(r , user)
+
+		// pass the authority to next handler in the chain if the user has been set in the subsequent request successfully
+		next.ServeHTTP(w , r)
+	})
 }

@@ -13,15 +13,17 @@ import (
 // constant definition for different scopes
 const (
 	ScopeActivation = "activation"
+	ScopeAuthentication = "authentication"
 )
 
 // token info struct
+// restructured the Token struct to modify around how it should appear in json body
 type Token struct{
-	PlainText string
-	Hash []byte
-	UserId int64
-	Expiry time.Time
-	Scope string
+	PlainText string `json:"token"`
+	Hash []byte `json:"-"`
+	UserId int64	`json:"-"`
+	Expiry time.Time	`json:"expiry"`
+	Scope string	`json:"-"`
 }
 
 

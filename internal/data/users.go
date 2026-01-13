@@ -16,6 +16,9 @@ var (
 	ErrDuplicateEmail = errors.New("duplicate email")
 )
 
+// AnonymousUser pointer holds the address of a User instance . This same address will be passed as the user address to authentication middleware for user instance of unauthenticated users , so when we do IsAnonymous() check and compare user in the request context window with this pointer address , we get true .
+var AnonymousUser = &User{}
+
 // hid password and version field from any output
 type User struct {
 	ID        int64     `json:"id"`
@@ -30,6 +33,11 @@ type User struct {
 type password struct {
 	plainText *string
 	hash      []byte
+}
+
+// if the user's User instance in the request context is the same address as AnonymousUser ; we get true , else false
+func (u *User) IsAnonymous() bool {
+	return  AnonymousUser == u
 }
 
 // hash given pass
@@ -278,3 +286,6 @@ func (m *UserModel) GetUserViaToken(tokenScope, tokenPlainText string) (*User , 
 	return &user , nil
 
 }
+
+
+// check if the user is Ano

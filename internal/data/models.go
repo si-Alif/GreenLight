@@ -15,6 +15,7 @@ type Models struct{
 	Movies MovieModel
 	Users UserModel
 	Tokens TokenModel
+	Permissions PermissionModel
 }
 
 // NewModels takes the DB connection pool's access though the parameter and then returns a Models structs instance(not address) to work with
@@ -23,6 +24,7 @@ func NewModels(db *sql.DB) Models{
 		Movies : MovieModel{DB: db},
 		Users: UserModel{DB: db},
 		Tokens: TokenModel{DB: db},
+		Permissions: PermissionModel{DB: db},
 	}
 }
 

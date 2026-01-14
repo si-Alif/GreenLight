@@ -14,12 +14,12 @@ func (app *application) routes() http.Handler{
 	router.HandlerFunc(http.MethodGet , "/v1/healthcheck" , app.healthcheckHandler)
 
 	// movies related
-	router.HandlerFunc(http.MethodGet , "/v1/movies" , app.requireActivatedUser(app.listMoviesHandler))
-	router.HandlerFunc(http.MethodPost , "/v1/movies" , app.requireActivatedUser(app.createMovieHandler))
-	router.HandlerFunc(http.MethodGet , "/v1/movies/:id" , app.requireActivatedUser(app.showMovieHandler))
+	router.HandlerFunc(http.MethodGet , "/v1/movies" , app.requireActivatedUserMiddleware(app.listMoviesHandler))
+	router.HandlerFunc(http.MethodPost , "/v1/movies" , app.requireActivatedUserMiddleware(app.createMovieHandler))
+	router.HandlerFunc(http.MethodGet , "/v1/movies/:id" , app.requireActivatedUserMiddleware(app.showMovieHandler))
 	// use a PATCH request rather than using PUT
-	router.HandlerFunc(http.MethodPatch , "/v1/movies/:id" , app.requireActivatedUser(app.updateMovieHandler))
-	router.HandlerFunc(http.MethodDelete, "/v1/movies/:id", app.requireActivatedUser(app.deleteMovieHandler))
+	router.HandlerFunc(http.MethodPatch , "/v1/movies/:id" , app.requireActivatedUserMiddleware(app.updateMovieHandler))
+	router.HandlerFunc(http.MethodDelete, "/v1/movies/:id", app.requireActivatedUserMiddleware(app.deleteMovieHandler))
 
 	// user related
 	router.HandlerFunc(http.MethodPost , "/v1/users" , app.registerUserHandler)

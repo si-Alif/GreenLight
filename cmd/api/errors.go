@@ -81,8 +81,19 @@ func (app *application) invalidCredentialResponse(w http.ResponseWriter , r *htt
 
 
 func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter , r *http.Request){
-	w.Header().Set("WWW-Authenticate" , "Bearer") // used this particular header to remind the client that we expect a bearer token 
+	w.Header().Set("WWW-Authenticate" , "Bearer") // used this particular header to remind the client that we expect a bearer token
 
 	msg := "invalid or missing authentication token"
 	app.errorResponse(w , r , http.StatusUnauthorized , msg)
 }
+
+func (app *application) AuthenticationRequiredResponse(w http.ResponseWriter , r *http.Request){
+	msg := "you must be authenticated to access this request"
+	app.errorResponse(w , r , http.StatusUnauthorized  , msg)
+}
+
+func (app *application) ActivationRequiredResponse(w http.ResponseWriter , r *http.Request){
+	msg := "Your account must be activated to perform this task"
+	app.errorResponse(w , r , http.StatusForbidden , msg)
+}
+

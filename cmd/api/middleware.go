@@ -230,13 +230,26 @@ func (app *application) enableCORS(next http.Handler) http.Handler{
 		// response differs based on Origin , so it should be included in the
 		w.Header().Set("Vary" , "Origin")
 
+		// A preflight request would have 3 components : HTTP method would be Options , Access-Control-Request-Method , Origin Header
+
+		w.Header().Add("Vary" , "Access-Control-Request-Method")
+
+		// 1 . We retrieved the Origin here
 		origin := r.Header.Get("Origin")
 
-		// check if origin is among one of the trusted origin 
+		// check if origin is among one of the trusted origin
 		if origin != ""{
 			for i :=range app.config.cors.trustedOrigins{
 				if origin == app.config.cors.trustedOrigins[i]{
 					w.Header().Set("Access-Control-Allow-Origin" , origin)
+
+					// 2. Checking if the request has Options method and Access-Control-Request-Method header . If it satisfies , it's a preflight request
+					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != ""{
+						w.Header().Set("Access-Control-Request-Methods" , "OPTIONS, PUT, PATCH, DELETE")
+						w.Header().Set("Access-Control-Allow-Headers" , "Authorization, Content-type")
+						w.WriteHeader(http.StatusOK) // if the preflight request has been processed successfully , return preflight cors request response and return
+						return
+					}
 					break
 				}
 			}

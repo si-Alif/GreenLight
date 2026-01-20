@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
 	"log/slog"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -124,6 +126,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	// variables to publish using expvar handler's JSON output
+	expvar.NewString("version").Set(version)
+
+	expvar.Publish("goroutine" , expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
+	expvar.Publish("database" , expvar.Func(func() any {
+		return db.Stats()
+	}))
+
+	expvar.Publish("timestamp" , expvar.Func(func() any {
+		return time.Now().Unix()
+	}))
+
+
+	// instantiate singleton app structure
 	app := &application{
 		config: cfg,
 		logger: logger,

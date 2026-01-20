@@ -43,7 +43,7 @@ func (app *application) routes() http.Handler{
 	// Metrics
 	router.Handler(http.MethodGet , "/debug/vars" , expvar.Handler())
 
-	return app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router)))) // Wrap the router with the panic recovery middleware
+	return app.metrics((app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router)))))) // Wrap the router with the panic recovery middleware
 
 }
 

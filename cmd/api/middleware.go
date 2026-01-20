@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
+	"expvar"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -258,3 +260,74 @@ func (app *application) enableCORS(next http.Handler) http.Handler{
 		next.ServeHTTP(w ,r)
 	})
 }
+
+
+type metricsResponseWriter struct{
+	wrapped http.ResponseWriter
+	statusCode int
+	headerWritten bool
+}
+
+func newMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter{
+	return &metricsResponseWriter{
+		wrapped: w,
+		statusCode: http.StatusOK,
+	}
+}
+
+func (mw *metricsResponseWriter) Header() http.Header{
+	return  mw.wrapped.Header()
+}
+
+func (mw *metricsResponseWriter) WriteHeader(statusCode int) {
+	// set the statusCode for the OG responseWriter
+	mw.wrapped.WriteHeader(statusCode)
+
+	// check if we have already collected the statusCode or not
+	if !mw.headerWritten{
+		mw.statusCode = statusCode
+		mw.headerWritten = true
+	}
+}
+
+func (mw *metricsResponseWriter) Write(b []byte) ( int , error ){
+	mw.headerWritten = true
+	return  mw.wrapped.Write(b)
+}
+
+func (mw *metricsResponseWriter) Unwrap() http.ResponseWriter{
+	return  mw.wrapped
+}
+
+
+// metrics middleware to track how many requests received , responses sent and total time to process . This middleware should be added at the very beginning cz we want to track everything going on in our application
+func (app *application) metrics(next http.Handler) http.Handler{
+	var(
+		totalRequestReceived = expvar.NewInt("total_requests_received")
+		totalResponseSent = expvar.NewInt("total_responses_sent")
+		totalProcessingTimeMicroseconds = expvar.NewInt("total_precessing_time_µs")
+		totalResponseSentByStatus = expvar.NewMap("total_response_sent_by_status")
+	)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		totalRequestReceived.Add(1) // increment request count by 1
+
+		mw := newMetricsResponseWriter(w)
+
+		next.ServeHTTP(mw , r)
+
+		totalResponseSent.Add(1)
+
+		totalResponseSentByStatus.Add(strconv.Itoa(mw.statusCode) , 1)
+
+		// time taken to process the sub-sequent request
+		duration :=	time.Since(start).Microseconds()
+		totalProcessingTimeMicroseconds.Add(duration)
+
+	})
+}
+
+
+

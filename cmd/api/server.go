@@ -50,11 +50,11 @@ func (app *application) serve() error {
 		//-------------------------------------------------------------
 
 		err := srv.Shutdown(ctx)
-		if err != nil{
+		if err != nil {
 			shutdownErr <- err
 		}
 
-		app.logger.Info("completing background tasks" , "addr" , srv.Addr)
+		app.logger.Info("completing background tasks", "addr", srv.Addr)
 
 		app.wg.Wait() // wait/block till all tasks are complete
 

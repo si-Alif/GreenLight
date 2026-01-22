@@ -9,60 +9,60 @@ import (
 	"greenlight.si-Alif.net/internal/validator"
 )
 
-func (app *application) registerUserHandler(w http.ResponseWriter , r *http.Request){
-	var input struct{
-		Name string `json:"name"`
-		Email string `json:"email"`
+func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	err := app.readJSON(w , r , &input)
+	err := app.readJSON(w, r, &input)
 
 	if err != nil {
-		app.badRequestResponse(w , r , err)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
 	user := &data.User{
-		Name: input.Name,
-		Email: input.Email,
+		Name:      input.Name,
+		Email:     input.Email,
 		Activated: false,
 	}
 
 	err = user.Password.Set(input.Password)
 	if err != nil {
-		app.serverErrorResponse(w , r , err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
 	v := validator.New()
 
-	if data.ValidateUser(v , user);!v.Valid(){
-		app.failedValidationResponse(w , r , v.Errors)
+	if data.ValidateUser(v, user); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
 	err = app.models.Users.Insert(user)
 	if err != nil {
-		switch{
-			case errors.Is(err , data.ErrDuplicateEmail):
-				v.AddError("email" , "a user with this email address already exists")
-				app.failedValidationResponse(w , r , v.Errors)
-			default :
-				app.serverErrorResponse(w , r , err)
+		switch {
+		case errors.Is(err, data.ErrDuplicateEmail):
+			v.AddError("email", "a user with this email address already exists")
+			app.failedValidationResponse(w, r, v.Errors)
+		default:
+			app.serverErrorResponse(w, r, err)
 		}
 		return
 	}
 
-	err = app.models.Permissions.AddPermissionsForUser(user.ID , "movies:read")
+	err = app.models.Permissions.AddPermissionsForUser(user.ID, "movies:read")
 	if err != nil {
-		app.serverErrorResponse(w , r , err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
 	// generate a activation token from the user
-	token , err := app.models.Tokens.New(user.ID , 24*time.Hour , data.ScopeActivation)
-	if err != nil{
-		app.serverErrorResponse(w , r , err)
+	token, err := app.models.Tokens.New(user.ID, 24*time.Hour, data.ScopeActivation)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
@@ -82,48 +82,47 @@ func (app *application) registerUserHandler(w http.ResponseWriter , r *http.Requ
 	}
 
 	// place the email sending functionality in a background goroutine
-	app.background(func(){
-		err := app.mailer.Send(user.Email , "user_welcome.tmpl.html" , templateData)
-		if err != nil{
+	app.background(func() {
+		err := app.mailer.Send(user.Email, "user_welcome.tmpl.html", templateData)
+		if err != nil {
 			app.logger.Error(err.Error()) // not sending app.serverErrorResponse() cz by the time we encounter any error from this , the client would've already sent the http response and even if we use it , it would send another http response resulting in a error
 		}
 	})
 
 	// err = app.writeJSON(w , http.StatusCreated , envelope{"user":user} , nil) --> rather than this we'll use http.StatusAccepted code to make the user realize that their has been accepted for processing
-	err = app.writeJSON(w , http.StatusAccepted , envelope{"user":user} , nil)
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 
-	if err != nil{
-		app.serverErrorResponse(w , r , err)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 	}
 }
 
-
-func (app *application) activeUserHandler(w http.ResponseWriter , r *http.Request){
-	var input struct{
+func (app *application) activeUserHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
 		TokenPlainText string `json:"token"`
 	}
 
-	err := app.readJSON(w , r , &input)
+	err := app.readJSON(w, r, &input)
 	if err != nil {
-		app.badRequestResponse(w , r , err)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
 	v := validator.New()
 
-	if data.ValidPlainTextToken(v , input.TokenPlainText); !v.Valid(){
-		app.failedValidationResponse(w , r , v.Errors)
+	if data.ValidPlainTextToken(v, input.TokenPlainText); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	user , err := app.models.Users.GetUserViaToken(data.ScopeActivation , input.TokenPlainText)
-	if err != nil{
-		switch{
-			case errors.Is(err , data.ErrRecordNotFound) :
-				v.AddError("token" , "invalid or expired activation token")
-				app.failedValidationResponse(w , r , v.Errors)
-			default:
-				app.serverErrorResponse(w , r , err)
+	user, err := app.models.Users.GetUserViaToken(data.ScopeActivation, input.TokenPlainText)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			v.AddError("token", "invalid or expired activation token")
+			app.failedValidationResponse(w, r, v.Errors)
+		default:
+			app.serverErrorResponse(w, r, err)
 		}
 		return
 	}
@@ -132,25 +131,25 @@ func (app *application) activeUserHandler(w http.ResponseWriter , r *http.Reques
 
 	err = app.models.Users.Update(user)
 	if err != nil {
-		switch  {
-		case errors.Is(err , data.ErrEditConflicts):
-			app.editConflictResponse(w , r)
-		default :
-			app.serverErrorResponse(w , r , err)
+		switch {
+		case errors.Is(err, data.ErrEditConflicts):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
 		}
 
-	return
-	}
-
-	err = app.models.Tokens.DeleteAllTokensForASpecificScopeOfUser(data.ScopeActivation , user.ID)
-	if err != nil{
-		app.serverErrorResponse(w , r , err)
 		return
 	}
 
-	err = app.writeJSON(w , http.StatusOK , envelope{"user" : user} , nil)
-	if err != nil{
-		app.serverErrorResponse(w , r , err)
+	err = app.models.Tokens.DeleteAllTokensForASpecificScopeOfUser(data.ScopeActivation, user.ID)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 	}
 
 }

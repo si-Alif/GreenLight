@@ -16,17 +16,17 @@ import (
 	"greenlight.si-Alif.net/internal/validator"
 )
 
-func (app *application) recoverPanic(next http.Handler) http.Handler{
-	return http.HandlerFunc(func(w http.ResponseWriter , r *http.Request){
+func (app *application) recoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// create a deferred function which will run constantly while unwinding error stack
-		defer func ()  {
+		defer func() {
 			if err := recover(); err != nil {
-				w.Header().Set("Connection" , "close") // close the connection once error occurs
-				app.serverErrorResponse(w , r , fmt.Errorf("%s" , err))
+				w.Header().Set("Connection", "close") // close the connection once error occurs
+				app.serverErrorResponse(w, r, fmt.Errorf("%s", err))
 			}
 		}()
 
-		next.ServeHTTP(w , r)
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -51,29 +51,26 @@ return http.HandlerFunc(func(w http.ResponseWriter , r *http.Request){
 
 */
 
-
 // IP-based rate-limiting
-func (app *application) rateLimit(next http.Handler) http.Handler{
+func (app *application) rateLimit(next http.Handler) http.Handler {
 
 	if !app.config.limiter.enabled {
 		return next // return if no limiter is needed
 	}
 
-
-
 	// define a client struct to hold the rate limiter and last seen time
 	type client struct {
-		limiter rate.Limiter
+		limiter  rate.Limiter
 		lastSeen time.Time
 	}
 
 	var (
-		mu sync.Mutex // centralized mutex for rate-limiting purpose
+		mu      sync.Mutex // centralized mutex for rate-limiting purpose
 		clients = make(map[string]*client)
 	)
 
 	// background goroutine for cleaning up old entries (per minute check and every 3/mins of inconsistency , cleanup)
-	go func(){
+	go func() {
 		// infinite loop
 		for {
 			time.Sleep(time.Minute)
@@ -81,9 +78,9 @@ func (app *application) rateLimit(next http.Handler) http.Handler{
 			// lock the mutex while the clean
 			mu.Lock()
 
-			for ip , client := range clients{
-				if time.Since(client.lastSeen) > 3 * time.Minute {
-					delete(clients , ip)
+			for ip, client := range clients {
+				if time.Since(client.lastSeen) > 3*time.Minute {
+					delete(clients, ip)
 				}
 			}
 
@@ -99,47 +96,46 @@ func (app *application) rateLimit(next http.Handler) http.Handler{
 		mu.Lock()
 
 		// check if the client exists in the map and if not add their IP with a rate limiter instance
-		if _ , found := clients[ip]; !found {
+		if _, found := clients[ip]; !found {
 			clients[ip] = &client{
-				limiter:*rate.NewLimiter(rate.Limit(app.config.limiter.rps) , app.config.limiter.burst)}
+				limiter: *rate.NewLimiter(rate.Limit(app.config.limiter.rps), app.config.limiter.burst)}
 		}
 
 		// once the limiter been assigned , attach current time
 		clients[ip].lastSeen = time.Now()
 
-		if !clients[ip].limiter.Allow(){
+		if !clients[ip].limiter.Allow() {
 			mu.Unlock()
-			app.rateLimitExceededResponse(w , r)
+			app.rateLimitExceededResponse(w, r)
 			return
 		}
 
 		mu.Unlock()
 
-		next.ServeHTTP(w , r)
+		next.ServeHTTP(w, r)
 
 	})
 
 }
 
-
 // authentication middleware
-func (app *application) authenticate(next http.Handler) http.Handler{
+func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// Add "Vary: Authorization" to indicate caches that based on this value response might vary
-		w.Header().Add("Vary" , "Authorization")
+		w.Header().Add("Vary", "Authorization")
 
 		authorizationHeader := r.Header.Get("Authorization")
 
-		if authorizationHeader == ""{
-			r = app.SetUserInRequestContext(r , data.AnonymousUser)
-			next.ServeHTTP(w , r) // call the next handler in the chain
+		if authorizationHeader == "" {
+			r = app.SetUserInRequestContext(r, data.AnonymousUser)
+			next.ServeHTTP(w, r) // call the next handler in the chain
 			return
 		}
 
 		headerParts := strings.Split(authorizationHeader, " ")
-		if len(headerParts) != 2 || headerParts[0] != "Bearer"{
-			app.invalidAuthenticationTokenResponse(w , r )
+		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+			app.invalidAuthenticationTokenResponse(w, r)
 			return
 		}
 
@@ -147,108 +143,106 @@ func (app *application) authenticate(next http.Handler) http.Handler{
 
 		v := validator.New()
 
-		if data.ValidPlainTextToken(v , token); !v.Valid(){
-			app.invalidAuthenticationTokenResponse(w , r)
+		if data.ValidPlainTextToken(v, token); !v.Valid() {
+			app.invalidAuthenticationTokenResponse(w, r)
 			return
 		}
 
-		user , err := app.models.Users.GetUserViaToken(data.ScopeAuthentication , token)
+		user, err := app.models.Users.GetUserViaToken(data.ScopeAuthentication, token)
 		if err != nil {
 			switch {
-				case errors.Is(err , data.ErrRecordNotFound):
-					app.invalidAuthenticationTokenResponse(w , r)
-				default :
-					app.serverErrorResponse(w , r , err)
+			case errors.Is(err, data.ErrRecordNotFound):
+				app.invalidAuthenticationTokenResponse(w, r)
+			default:
+				app.serverErrorResponse(w, r, err)
 
 			}
 			return
 		}
 
-
-		r = app.SetUserInRequestContext(r , user)
+		r = app.SetUserInRequestContext(r, user)
 
 		// pass the authority to next handler in the chain if the user has been set in the subsequent request successfully
-		next.ServeHTTP(w , r)
+		next.ServeHTTP(w, r)
 	})
 }
 
 // check if a user is authenticated
-func (app *application) requireAuthenticatedUserMiddleware(next http.HandlerFunc) http.HandlerFunc{
+func (app *application) requireAuthenticatedUserMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := app.GetUserFromSubsequentRequestContext(r)
 
-		if user.IsAnonymous(){
-			app.AuthenticationRequiredResponse(w , r)
+		if user.IsAnonymous() {
+			app.AuthenticationRequiredResponse(w, r)
 			return
 		}
 
-		next.ServeHTTP(w ,r)
+		next.ServeHTTP(w, r)
 	})
 }
 
 // check if the user is both authenticated and authorized to perform
-func (app *application) requireActivatedUserMiddleware(next http.HandlerFunc) http.HandlerFunc{
+func (app *application) requireActivatedUserMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	// create the authorization checker middleware
 	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := app.GetUserFromSubsequentRequestContext(r)
 
-		if !user.Activated{
-			app.ActivationRequiredResponse(w ,r)
+		if !user.Activated {
+			app.ActivationRequiredResponse(w, r)
 			return
 		}
 
-		next.ServeHTTP(w ,r)
+		next.ServeHTTP(w, r)
 	})
-
 
 	return app.requireAuthenticatedUserMiddleware(fn)
 
 }
 
-func (app *application) requirePermission(code string , next http.HandlerFunc) http.HandlerFunc{
+func (app *application) requirePermission(code string, next http.HandlerFunc) http.HandlerFunc {
 	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := app.GetUserFromSubsequentRequestContext(r)
 
-		permissions , err := app.models.Permissions.GetAllPermissionsForUser(user.ID)
+		permissions, err := app.models.Permissions.GetAllPermissionsForUser(user.ID)
 		if err != nil {
-			app.serverErrorResponse(w ,r ,err)
+			app.serverErrorResponse(w, r, err)
 			return
 		}
 
-		if !permissions.Include(code){
-			app.notPermittedResponse(w ,r)
+		if !permissions.Include(code) {
+			app.notPermittedResponse(w, r)
 			return
 		}
 
-		next.ServeHTTP(w ,r)
+		next.ServeHTTP(w, r)
 	})
 
-	return  app.requireActivatedUserMiddleware(fn)
+	return app.requireActivatedUserMiddleware(fn)
 }
 
-func (app *application) enableCORS(next http.Handler) http.Handler{
-	return  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (app *application) enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// response differs based on Origin , so it should be included in the
-		w.Header().Set("Vary" , "Origin")
+		w.Header().Set("Vary", "Origin")
 
 		// A preflight request would have 3 components : HTTP method would be Options , Access-Control-Request-Method , Origin Header
 
-		w.Header().Add("Vary" , "Access-Control-Request-Method")
+		w.Header().Add("Vary", "Access-Control-Request-Method")
 
 		// 1 . We retrieved the Origin here
 		origin := r.Header.Get("Origin")
 
 		// check if origin is among one of the trusted origin
-		if origin != ""{
-			for i :=range app.config.cors.trustedOrigins{
-				if origin == app.config.cors.trustedOrigins[i]{
-					w.Header().Set("Access-Control-Allow-Origin" , origin)
+		if origin != "" {
+			for i := range app.config.cors.trustedOrigins {
+				if origin == app.config.cors.trustedOrigins[i] {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
 
 					// 2. Checking if the request has Options method and Access-Control-Request-Method header . If it satisfies , it's a preflight request
-					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != ""{
-						w.Header().Set("Access-Control-Request-Methods" , "OPTIONS, PUT, PATCH, DELETE")
-						w.Header().Set("Access-Control-Allow-Headers" , "Authorization, Content-type")
+					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+						w.Header().Set("Access-Control-Request-Methods", "OPTIONS, PUT, PATCH, DELETE")
+						w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-type")
 						w.WriteHeader(http.StatusOK) // if the preflight request has been processed successfully , return preflight cors request response and return
 						return
 					}
@@ -257,26 +251,25 @@ func (app *application) enableCORS(next http.Handler) http.Handler{
 			}
 		}
 
-		next.ServeHTTP(w ,r)
+		next.ServeHTTP(w, r)
 	})
 }
 
-
-type metricsResponseWriter struct{
-	wrapped http.ResponseWriter
-	statusCode int
+type metricsResponseWriter struct {
+	wrapped       http.ResponseWriter
+	statusCode    int
 	headerWritten bool
 }
 
-func newMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter{
+func newMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter {
 	return &metricsResponseWriter{
-		wrapped: w,
+		wrapped:    w,
 		statusCode: http.StatusOK,
 	}
 }
 
-func (mw *metricsResponseWriter) Header() http.Header{
-	return  mw.wrapped.Header()
+func (mw *metricsResponseWriter) Header() http.Header {
+	return mw.wrapped.Header()
 }
 
 func (mw *metricsResponseWriter) WriteHeader(statusCode int) {
@@ -284,29 +277,28 @@ func (mw *metricsResponseWriter) WriteHeader(statusCode int) {
 	mw.wrapped.WriteHeader(statusCode)
 
 	// check if we have already collected the statusCode or not
-	if !mw.headerWritten{
+	if !mw.headerWritten {
 		mw.statusCode = statusCode
 		mw.headerWritten = true
 	}
 }
 
-func (mw *metricsResponseWriter) Write(b []byte) ( int , error ){
+func (mw *metricsResponseWriter) Write(b []byte) (int, error) {
 	mw.headerWritten = true
-	return  mw.wrapped.Write(b)
+	return mw.wrapped.Write(b)
 }
 
-func (mw *metricsResponseWriter) Unwrap() http.ResponseWriter{
-	return  mw.wrapped
+func (mw *metricsResponseWriter) Unwrap() http.ResponseWriter {
+	return mw.wrapped
 }
-
 
 // metrics middleware to track how many requests received , responses sent and total time to process . This middleware should be added at the very beginning cz we want to track everything going on in our application
-func (app *application) metrics(next http.Handler) http.Handler{
-	var(
-		totalRequestReceived = expvar.NewInt("total_requests_received")
-		totalResponseSent = expvar.NewInt("total_responses_sent")
+func (app *application) metrics(next http.Handler) http.Handler {
+	var (
+		totalRequestReceived            = expvar.NewInt("total_requests_received")
+		totalResponseSent               = expvar.NewInt("total_responses_sent")
 		totalProcessingTimeMicroseconds = expvar.NewInt("total_precessing_time_µs")
-		totalResponseSentByStatus = expvar.NewMap("total_response_sent_by_status")
+		totalResponseSentByStatus       = expvar.NewMap("total_response_sent_by_status")
 	)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -316,18 +308,15 @@ func (app *application) metrics(next http.Handler) http.Handler{
 
 		mw := newMetricsResponseWriter(w)
 
-		next.ServeHTTP(mw , r)
+		next.ServeHTTP(mw, r)
 
 		totalResponseSent.Add(1)
 
-		totalResponseSentByStatus.Add(strconv.Itoa(mw.statusCode) , 1)
+		totalResponseSentByStatus.Add(strconv.Itoa(mw.statusCode), 1)
 
 		// time taken to process the sub-sequent request
-		duration :=	time.Since(start).Microseconds()
+		duration := time.Since(start).Microseconds()
 		totalProcessingTimeMicroseconds.Add(duration)
 
 	})
 }
-
-
-

@@ -1,6 +1,9 @@
 #Include env variables from .envrc file
 include .envrc
 
+# =================================================================
+# HELPER COMMANDS
+# =================================================================
 
 ## help : print this help message
 .PHONY: help
@@ -13,6 +16,11 @@ help :
 .PHONY: confirm
 confirm :
 	@echo -n 'Are you sure you want to proceed? (y/n): ' && read ans && [ $${ans:-N} = y ]
+
+
+# =================================================================
+# DEVELOPMENT COMMANDS
+# =================================================================
 
 ## run/api : run the cmd/api application
 .PHONY: run/api
@@ -35,3 +43,33 @@ db/migrations/up: confirm
 db/migrations/new :
 	@echo "Creating new migration for ${name}..."
 	migrate create -seq -ext=.sql -dir=./migrations ${name}
+
+
+# =================================================================
+# QUALITY CONTROL COMMANDS
+# =================================================================
+
+## tidy : tidy module dependencies and format .go files
+.PHONY : tidy
+tidy :
+	@echo "Tidying module dependencies..."
+	go mod tidy
+	@echo "Module dependencies tidied."
+	@echo "Formatting .go files..."
+	go fmt ./...
+
+## audit : audit module dependencies, vet code, and run tests
+.PHONY : audit
+audit :
+	@echo "Auditing module dependencies for vulnerabilities..."
+	go mod tidy -diff
+	go mod verify
+	@echo "Audit complete."
+	@echo "Vetting code..."
+	go vet ./...
+	go tool staticcheck ./...
+	@echo "Vetting complete."
+	@echo "Running tests..."
+	go test -race -vet=off ./...
+	@echo "Tests complete."
+	@echo "All quality control checks passed."

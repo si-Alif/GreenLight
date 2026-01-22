@@ -160,7 +160,7 @@ func (md MovieModel) Delete(id int64) error {
 
 }
 
-func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata,error) {
+func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
 	//1️⃣ ------------------------------------
 	// construct a query string to retrieve all the movies data for now
 	// query := `SELECT id , created_at , title , year , runtime , genres , version FROM movies ORDER BY id`
@@ -211,23 +211,23 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 	*/
 
 	/*
-	-Implement sorting and sorting order
+		-Implement sorting and sorting order
 
-	query := fmt.Sprintf(
-		`SELECT id , created_at , title , year , runtime , genres , version FROM movies
-			WHERE (to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '')
-			AND (genres @> $2 OR $2 = '{}')
-			ORDER BY %s %s , id ASC`, filters.sortColumn(), filters.sortDirection())
+		query := fmt.Sprintf(
+			`SELECT id , created_at , title , year , runtime , genres , version FROM movies
+				WHERE (to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '')
+				AND (genres @> $2 OR $2 = '{}')
+				ORDER BY %s %s , id ASC`, filters.sortColumn(), filters.sortDirection())
 	*/
 
 	/*
-	Implement pagination
-	query := fmt.Sprintf(
-		`SELECT id , created_at , title , year , runtime , genres , version FROM movies
-		WHERE (to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '')
-		AND (genres @> $2 OR $2 = '{}')
-		ORDER BY %s %s , id ASC
-		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+		Implement pagination
+		query := fmt.Sprintf(
+			`SELECT id , created_at , title , year , runtime , genres , version FROM movies
+			WHERE (to_tsvector('simple' , title) @@ plainto_tsquery('simple' , $1) OR $1 = '')
+			AND (genres @> $2 OR $2 = '{}')
+			ORDER BY %s %s , id ASC
+			LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
 
 	*/
 
@@ -239,17 +239,16 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 		ORDER BY %s %s , id ASC
 		LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
 
-
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	defer cancel()
 
-	args := []any{title, pq.Array(genres) , filters.limit() , filters.offset()}
+	args := []any{title, pq.Array(genres), filters.limit(), filters.offset()}
 	// retrieve resultSet of movie from database
 	rows, err := md.DB.QueryContext(ctx, query, args...)
 
 	if err != nil {
-		return nil,Metadata{},err
+		return nil, Metadata{}, err
 	}
 
 	// close the connection
@@ -276,7 +275,7 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 		)
 
 		if err != nil {
-			return nil,Metadata{} , err
+			return nil, Metadata{}, err
 		}
 
 		movies = append(movies, &movie)
@@ -286,11 +285,11 @@ func (md MovieModel) GetAll(title string, genres []string, filters Filters) ([]*
 	// check for rows.Err , does it have any error after iterating over all the resultSet ?
 
 	if err = rows.Err(); err != nil {
-		return nil, Metadata{} ,  err
+		return nil, Metadata{}, err
 	}
 
-	metadata := calculateMetadata(totalRecords , filters.Page , filters.PageSize)
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
 
-	return movies, metadata,  nil
+	return movies, metadata, nil
 
 }

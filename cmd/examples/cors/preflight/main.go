@@ -6,7 +6,6 @@ import (
 	"net/http"
 )
 
-
 // This request makes a POST request with Content-Type "application/json" which makes it out of the simple cors category .Thus a preflight request will be deployed now
 const html = `
 <!DOCTYPE html>

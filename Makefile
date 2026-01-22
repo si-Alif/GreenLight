@@ -79,3 +79,10 @@ audit :
 	go test -race -vet=off ./...
 	@echo "Tests complete."
 	@echo "All quality control checks passed."
+
+## build/api : build the cmd/api application
+.PHONY : build/api
+build/api :
+	@echo "Building cmd/api application's executable binary..."
+	go build -ldflags='-s' -o ./bin/api ./cmd/api
+	@echo "Build complete. Binary located at ./bin/api"

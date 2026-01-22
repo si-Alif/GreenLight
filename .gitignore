@@ -33,3 +33,6 @@ go.work.sum
 
 # Vendored dependencies
 /vendor
+
+# binary files created by go build command in root directory
+/bin

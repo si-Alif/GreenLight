@@ -49,12 +49,18 @@ db/migrations/new :
 # QUALITY CONTROL COMMANDS
 # =================================================================
 
-## tidy : tidy module dependencies and format .go files
+## tidy : tidy module dependencies, verify, vendor, and format code
 .PHONY : tidy
 tidy :
 	@echo "Tidying module dependencies..."
 	go mod tidy
 	@echo "Module dependencies tidied."
+	@echo "Verifying module dependencies..."
+	go mod verify
+	@echo "Module dependencies verified."
+	@echo "Vendoring module dependencies..."
+	go mod vendor
+	@echo "Module dependencies vendored."
 	@echo "Formatting .go files..."
 	go fmt ./...
 

@@ -83,6 +83,9 @@ audit :
 ## build/api : build the cmd/api application
 .PHONY : build/api
 build/api :
-	@echo "Building cmd/api application's executable binary..."
+	@echo "Building cmd/api application's local machine compatible binary build..."
 	go build -ldflags='-s' -o ./bin/api ./cmd/api
-	@echo "Build complete. Binary located at ./bin/api"
+	@echo "Local machine compatible build complete. Binary located at ./bin/api"
+	@echo "Building cmd/api application's production compatible binary build(linux/amd64)..."
+	GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o ./bin/linux-amd64/api ./cmd/api
+	@echo "Production compatible build complete. Binary located at ./bin/linux-amd64/api"

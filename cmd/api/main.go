@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"expvar"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"runtime"
@@ -15,9 +16,12 @@ import (
 	_ "github.com/lib/pq"
 	"greenlight.si-Alif.net/internal/data"
 	"greenlight.si-Alif.net/internal/mailer"
+	"greenlight.si-Alif.net/internal/vcs"
 )
 
-const version = "1.0.0"
+var (
+	version = vcs.Version()
+)
 
 // To store apps config data
 type config struct {
@@ -103,7 +107,14 @@ func main() {
 		return nil
 	})
 
+	showAppVer := flag.Bool("version" , false , "Show Application version")
+
 	flag.Parse()
+
+	if *showAppVer{
+		fmt.Printf("Version : %s\n" , version)
+		os.Exit(0)
+	}
 
 	cfg.env = *env // ✅ This is now correct as env flag's now pointing to the passed variable value from the CLI
 
